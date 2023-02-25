@@ -230,6 +230,23 @@ class CtfTeam:
     def fetch(guild, chan_id):
         if chan_id not in CtfTeam.__teams__:
             if not db.teamdb[str(guild.id)].find_one({"chan_id": chan_id}):
+                text_channel_list = []
+                text_channel_name = "NOPE_1337_NOTHING_TO_SEE"
+                for channel in guild.text_channels:
+                    if chan_id == channel.id:
+                        text_channel_name = channel.name
+                        break
+                for channel in guild.text_channels:
+                    if text_channel_name in channel.name:
+                        text_channel_list.append(channel)
+                with open("/tmp/test", "a") as f:
+                    f.write("\n\n\n")
+                    f.write(str(text_channel_list))
+                    f.write(str(chan_id))
+                if len(text_channel_list) > 1:
+                    CtfTeam.__teams__[chan_id] = CtfTeam(guild, chan_id, text_channel_name)
+                    CtfTeam.__teams__[chan_id].__teamdata["chals"] = text_channel_list[::]
+                    return CtfTeam.__teams__[chan_id]
                 return None
             CtfTeam.__teams__[chan_id] = CtfTeam(guild, chan_id)
         else:
@@ -238,15 +255,28 @@ class CtfTeam:
         # TODO: check guild is same
         return CtfTeam.__teams__[chan_id]
 
-    def __init__(self, guild, chan_id):
+    def __init__(self, guild, chan_id, name=""):
         self.__guild = guild
         self.__chan_id = chan_id
-        self.__teams = db.teamdb[str(guild.id)]
-        self.refresh()
+        if name == "":
+            self.__teams = db.teamdb[str(guild.id)]
+            self.refresh()
+        else:
+            self.__teamdata = {
+                "archived": True,
+                "name": name,
+                "chan_id": chan_id,
+                "chals": [],
+            }
+            self.test = True
 
     @property
     def challenges(self):
-        return [Challenge.fetch(self.__guild, cid) for cid in self.__teamdata["chals"]]
+        try:
+            if self.test:
+                return self.__teamdata["chals"]
+        except:
+            return [Challenge.fetch(self.__guild, cid) for cid in self.__teamdata["chals"]]
 
     @property
     def name(self):
@@ -466,7 +496,9 @@ class CtfTeam:
                 f"Confirmation does not equal the CTF name. Execute `!deletectf {self.name}`"
             )
 
-        for c in [self.__chan_id] + [ch.chan_id for ch in self.challenges]:
+        channels = [ch.chan_id if hasattr(ch,"chan_id") else ch.id for ch in self.challenges]
+        #channels = [self.__chan_id] + [ch.id for ch in self.challenges]
+        for c in channels[::-1]:
             try:
                 await self.__guild.get_channel(c).delete(reason="Deleting CTF")
             except Exception as e:
