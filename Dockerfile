@@ -1,5 +1,7 @@
 FROM python:3.9.4-slim
 
+LABEL org.opencontainers.image.source https://github.com/itemizentnu/fiskebot
+
 ENV NAME bot
 ENV APP_HOME /home/bot
 
