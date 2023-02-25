@@ -234,17 +234,13 @@ class CtfTeam:
                 text_channel_name = "NOPE_1337_NOTHING_TO_SEE"
                 for channel in guild.text_channels:
                     if chan_id == channel.id:
-                        text_channel_name = channel.name
+                        text_channel_name = channel.name+"-"
                         break
                 for channel in guild.text_channels:
                     if text_channel_name in channel.name:
                         text_channel_list.append(channel)
-                with open("/tmp/test", "a") as f:
-                    f.write("\n\n\n")
-                    f.write(str(text_channel_list))
-                    f.write(str(chan_id))
                 if len(text_channel_list) > 1:
-                    CtfTeam.__teams__[chan_id] = CtfTeam(guild, chan_id, text_channel_name)
+                    CtfTeam.__teams__[chan_id] = CtfTeam(guild, chan_id, text_channel_name[:-1])
                     CtfTeam.__teams__[chan_id].__teamdata["chals"] = text_channel_list[::]
                     return CtfTeam.__teams__[chan_id]
                 return None
@@ -496,8 +492,7 @@ class CtfTeam:
                 f"Confirmation does not equal the CTF name. Execute `!deletectf {self.name}`"
             )
 
-        channels = [ch.chan_id if hasattr(ch,"chan_id") else ch.id for ch in self.challenges]
-        #channels = [self.__chan_id] + [ch.id for ch in self.challenges]
+        channels = [self.__chan.id] + [ch.chan_id if hasattr(ch,"chan_id") else ch.id for ch in self.challenges]
         for c in channels[::-1]:
             try:
                 await self.__guild.get_channel(c).delete(reason="Deleting CTF")
